@@ -118,9 +118,9 @@ namespace SpeckleCore
             var customAttributes = System.Reflection.CustomAttributeExtensions.GetCustomAttributes(objectTypeInfo);
 
             var knownTypeAttributes = System.Linq.Enumerable.Where(customAttributes, a => a.GetType().Name == "KnownTypeAttribute");
-            dynamic knownTypeAttribute = System.Linq.Enumerable.SingleOrDefault(knownTypeAttributes, a => IsKnwonTypeTargetType(a, discriminator));
+            Attribute knownTypeAttribute = System.Linq.Enumerable.SingleOrDefault(knownTypeAttributes, a => IsKnownTypeTargetType(a, discriminator));
             if (knownTypeAttribute != null)
-                return knownTypeAttribute.Type;
+                return knownTypeAttribute.TypeId.GetType();
 
             var typeName = objectType.Namespace + "." + discriminator;
             var subtype = System.Reflection.IntrospectionExtensions.GetTypeInfo(objectType).Assembly.GetType(typeName);
@@ -134,9 +134,9 @@ namespace SpeckleCore
             throw new System.InvalidOperationException("Could not find subtype of '" + objectType.Name + "' with discriminator '" + discriminator + "'.");
         }
 
-        private bool IsKnwonTypeTargetType(dynamic attribute, string discriminator)
+        private bool IsKnownTypeTargetType(Attribute attribute, string discriminator)
         {
-            return attribute?.Type.Name == discriminator;
+            return attribute?.TypeId.GetType().Name == discriminator;
         }
 
 
