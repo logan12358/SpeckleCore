@@ -98,6 +98,7 @@ namespace SpeckleCore
       catch ( SpeckleException e )
       {
         OnError?.Invoke( this, new SpeckleEventArgs() { EventName = e.StatusCode.ToString(), EventData = e.Message } );
+        // TODO: we should probably return here, to be consistent with IntializeSender
       }
 
       try
@@ -156,6 +157,48 @@ namespace SpeckleCore
         return null;
       }
 
+    }
+
+
+    /// <summary>
+    /// Initialises this client as a Sender on an existing stream.
+    /// </summary>
+    /// <param name="streamId"></param>
+    /// <param name="authToken"></param>
+    /// <param name="documentName"></param>
+    /// <param name="documentType"></param>
+    /// <param name="documentGuid"></param>
+    /// <returns></returns>
+    public async Task IntializeSender( string streamId, string authToken, string documentName, string documentType, string documentGuid )
+    {
+      if ( Role != null )
+        throw new Exception( "Role changes are not permitted. Maybe create a new client?" );
+
+      Role = ClientRole.Sender;
+
+      try
+      {
+        AuthToken = authToken;
+        User = ( await this.UserGetAsync() ).Resource;
+      }
+      catch ( SpeckleException e )
+      {
+        OnError?.Invoke( this, new SpeckleEventArgs() { EventName = "error", EventData = "Could not log in: " + e.Message } );
+        return;
+      }
+
+      try
+      {
+        Stream = ( await this.StreamGetAsync( streamId, null ) ).Resource;
+        StreamId = Stream.StreamId;
+
+        await SetupClient( documentName, documentType, documentGuid );
+        SetupWebsocket();
+      }
+      catch ( SpeckleException e )
+      {
+        OnError?.Invoke( this, new SpeckleEventArgs() { EventName = e.StatusCode.ToString(), EventData = e.Message } );
+      }
     }
 
     private async Task SetupClient( string documentName = null, string documentType = null, string documentGuid = null )
